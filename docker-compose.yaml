@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: home-portal-postgres
+    environment:
+      POSTGRES_DB: home_portal
+      POSTGRES_USER: home
+      POSTGRES_PASSWORD: home
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

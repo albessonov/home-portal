@@ -71,3 +71,19 @@ func (a *App) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "id not found", http.StatusNotFound)
 	fmt.Println(id)
 }
+func (a *App) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	idString := r.PathValue("id")
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		http.Error(w, "invalid task id", http.StatusBadRequest)
+		return
+	}
+	for i := range a.tasks {
+		if a.tasks[i].ID == id {
+			a.tasks = append(a.tasks[:i], a.tasks[i+1:]...)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	http.Error(w, "id not found", http.StatusNotFound)
+}

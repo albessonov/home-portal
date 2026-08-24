@@ -13,6 +13,7 @@ func main() {
 	http.HandleFunc("GET /api/health", (healthHandler))
 	http.HandleFunc("POST /api/tasks", app.addTaskHandler)
 	http.HandleFunc("PATCH /api/tasks/{id}", app.updateTaskHandler)
+	http.HandleFunc("DELETE /api/tasks/{id}", app.deleteTaskHandler)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println(err)
