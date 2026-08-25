@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home Portal</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">HOME PORTAL</p>
+        <h1 id="greeting">Добрый вечер</h1>
+        <p class="subtitle">Что дома требует внимания прямо сейчас.</p>
+      </div>
+
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>Дом online</span>
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="card tasks-card">
+        <div class="card-header">
+          <div>
+            <p class="section-label">СЕГОДНЯ</p>
+            <h2>Задачи</h2>
+          </div>
+          <span id="taskCount" class="counter">0</span>
+        </div>
+
+        <form id="taskForm" class="task-form">
+          <input
+            id="taskTitle"
+            type="text"
+            autocomplete="off"
+            placeholder="Например: купить хлеб"
+            aria-label="Название новой задачи"
+          >
+          <button type="submit">Добавить</button>
+        </form>
+
+        <div id="taskList" class="task-list"></div>
+
+        <p id="tasksEmpty" class="empty-state">
+          Пока ничего. Можно делать вид, что всё под контролем.
+        </p>
+      </article>
+
+      <aside class="side-column">
+        <article class="card">
+          <p class="section-label">БЫСТРЫЕ ДЕЙСТВИЯ</p>
+          <div class="quick-actions">
+            <button id="focusTaskInput" class="secondary-button">+ Задача</button>
+            <button class="secondary-button" disabled>+ Покупка</button>
+          </div>
+          <p class="muted">Покупки подключим следующим модулем.</p>
+        </article>
+
+        <article class="card">
+          <p class="section-label">ДОМ</p>
+          <div class="system-row">
+            <span>Backend</span>
+            <span class="ok">online</span>
+          </div>
+          <div class="system-row">
+            <span>PostgreSQL</span>
+            <span class="ok">online</span>
+          </div>
+        </article>
+      </aside>
+    </section>
+
+    <p id="errorBanner" class="error-banner" hidden></p>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

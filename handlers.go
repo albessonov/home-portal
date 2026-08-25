@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,12 +18,18 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 func (a *App) dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+
+	tasks, err := a.tasks.List(r.Context())
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
 	d := DashboardResponse{
 		Greetings: "Добрый вечер",
-		Tasks:     a.tasks,
+		Tasks:     tasks,
 		Shopping:  []string{},
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(d)
 }
 func (a *App) addTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,15 +39,20 @@ func (a *App) addTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	newTask := Task{
-		ID:        len(a.tasks) + 1,
-		Title:     req.Title,
-		Completed: false,
+	if req.Title == "" {
+		http.Error(w, "title is required", http.StatusBadRequest)
+		return
 	}
-	a.tasks = append(a.tasks, newTask)
+	task, err := a.tasks.Create(
+		r.Context(), req.Title,
+	)
+	if err != nil {
+		http.Error(w, "task was not created", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newTask)
+	json.NewEncoder(w).Encode(task)
 
 }
 func (a *App) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -59,17 +72,20 @@ func (a *App) updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "hueta", http.StatusBadRequest)
 		return
 	}
-	for i := range a.tasks {
-		if a.tasks[i].ID == id {
-			a.tasks[i].Completed = *req.Completed
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(a.tasks[i])
-			return
-		}
+
+	task, err := a.tasks.UpdateCompleted(r.Context(), id, *req.Completed)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		http.Error(w, "task not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "id not found", http.StatusNotFound)
-	fmt.Println(id)
+
+	if err != nil {
+		http.Error(w, "failed to update task", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }
 func (a *App) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idString := r.PathValue("id")
@@ -78,12 +94,16 @@ func (a *App) deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid task id", http.StatusBadRequest)
 		return
 	}
-	for i := range a.tasks {
-		if a.tasks[i].ID == id {
-			a.tasks = append(a.tasks[:i], a.tasks[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	err = a.tasks.Delete(r.Context(), id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		http.Error(w, "task not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "id not found", http.StatusNotFound)
+
+	if err != nil {
+		http.Error(w, "delete error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
